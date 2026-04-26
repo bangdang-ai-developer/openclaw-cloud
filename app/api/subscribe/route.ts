@@ -1,60 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
+import { Resend } from 'resend'
 
-const WAITLIST_FILE = path.join(process.cwd(), 'waitlist.json')
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Initialize waitlist file
-async function initWaitlistFile() {
-  try {
-    await fs.access(WAITLIST_FILE)
-  } catch {
-    await fs.writeFile(WAITLIST_FILE, JSON.stringify([]))
-  }
-}
+// Owner email to receive notifications
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'bang@example.com'
 
-// Read waitlist from file
-async function readWaitlist() {
-  await initWaitlistFile()
-  const data = await fs.readFile(WAITLIST_FILE, 'utf-8')
-  return JSON.parse(data)
-}
-
-// Write waitlist to file
-async function writeWaitlist(waitlist: any[]) {
-  await fs.writeFile(WAITLIST_FILE, JSON.stringify(waitlist, null, 2))
-}
-
-// Add email to waitlist
-async function addToWaitlist(email: string, fullName: string, companyName: string, tierInterest: string) {
-  const waitlist = await readWaitlist()
-
-  // Check if email already exists
-  if (waitlist.some((item: any) => item.email === email)) {
-    return { exists: true }
-  }
-
-  // Add new subscriber
-  const newSubscriber = {
-    id: Date.now().toString(),
-    email: email.toLowerCase(),
-    fullName,
-    companyName,
-    tierInterest,
-    source: 'landing_page',
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    metadata: {
-      userAgent: 'api',
-      ip: 'unknown',
-      referrer: 'direct'
-    }
-  }
-
-  waitlist.push(newSubscriber)
-  await writeWaitlist(waitlist)
-
-  return { exists: false, subscriber: newSubscriber }
+// Email validation
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
 }
 
 export async function POST(request: NextRequest) {
@@ -70,33 +26,120 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!validateEmail(email)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       )
     }
 
-    // Add to waitlist
-    const result = await addToWaitlist(email, fullName || '', companyName || '', tierInterest || '')
+    // Send notification email to owner
+    try {
+      await resend.emails.send({
+        from: 'OpenClaw Cloud <onboarding@resend.dev>',
+        to: OWNER_EMAIL,
+        subject: `🎉 New Email Signup: ${email}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">🎉 New Email Signup!</h2>
+            <p style="color: #666;">You have a new subscriber for OpenClaw Cloud:</p>
 
-    if (result.exists) {
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+              ${fullName ? `<p style="margin: 5px 0;"><strong>Name:</strong> ${fullName}</p>` : ''}
+              ${companyName ? `<p style="margin: 5px 0;"><strong>Company:</strong> ${companyName}</p>` : ''}
+              ${tierInterest ? `<p style="margin: 5px 0;"><strong>Interest:</strong> ${tierInterest} tier</p>` : ''}
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString('vi-VN')}</p>
+            </div>
+
+            <p style="color: #666;">
+              <strong>Next Steps:</strong>
+            </p>
+            <ol style="color: #666; line-height: 1.6;">
+              <li>Add this email to your waitlist spreadsheet</li>
+              <li>Send a welcome email within 24 hours</li>
+              <li>Offer a quick demo call if they're interested</li>
+            </ol>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+              <p style="color: #999; font-size: 12px;">
+                This is an automated notification from OpenClaw Cloud landing page.
+              </p>
+            </div>
+          </div>
+        `,
+      })
+
+      // Send confirmation email to subscriber (optional)
+      await resend.emails.send({
+        from: 'OpenClaw Cloud <onboarding@resend.dev>',
+        to: email,
+        subject: '🎉 Chào mừng bạn tham gia OpenClaw Cloud!',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <div style="font-size: 48px;">🦞</div>
+              <h1 style="color: #333;">OpenClaw Cloud</h1>
+            </div>
+
+            <h2 style="color: #333;">Chào mừng bạn! 🎉</h2>
+
+            <p style="color: #666; line-height: 1.6;">
+              Cảm ơn bạn đã đăng ký với OpenClaw Cloud! Bạn đã được thêm vào danh sách chờ của chúng tôi.
+            </p>
+
+            <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #0891b2; margin-top: 0;">✨ Dự kiến sắp tới:</h3>
+              <ul style="color: #666; line-height: 1.8;">
+                <li>Email tự động phân loại (AI)</li>
+                <li>Lịch họp thông minh</li>
+                <li>Quản lý tasks tự động</li>
+                <li>Hỗ trợ customer service 24/7</li>
+              </ul>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">
+              <strong>Ưu đãi early bird:</strong> Giảm 50% cho 100 khách hàng đầu tiên!
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://openclaw-cloud-ls9a.vercel.app"
+                 style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                Truy cập trang web
+              </a>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">
+              Chúng tôi sẽ liên hệ với bạn sớm để discuss về nhu cầu của bạn.
+            </p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px;">
+              <p>Bạn nhận email này vì đã đăng ký tại OpenClaw Cloud.</p>
+              <p>Questions? Reply to this email!</p>
+            </div>
+          </div>
+        `,
+      })
+
       return NextResponse.json({
         success: true,
-        message: 'Bạn đã đăng ký trước đó rồi!',
-        isNew: false
+        message: '🎉 Chúc mừng! Bạn đã được thêm vào danh sách chờ. Kiểm tra email để xác nhận!',
+        isNew: true
+      })
+    } catch (emailError: any) {
+      console.error('Resend error:', emailError)
+
+      // Fallback: Still return success even if email fails
+      // (Don't block user signup if email service has issues)
+      return NextResponse.json({
+        success: true,
+        message: '🎉 Đăng ký thành công! Chúng tôi sẽ liên hệ sớm.',
+        isNew: true,
+        note: 'Email notification failed (logged for investigation)'
       })
     }
-
-    return NextResponse.json({
-      success: true,
-      message: '🎉 Chúc mừng! Bạn đã được thêm vào danh sách chờ. Chúng tôi sẽ liên hệ sớm!',
-      isNew: true
-    })
   } catch (error: any) {
-    console.error('Error subscribing email:', error)
+    console.error('Subscription error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -110,32 +153,31 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email')
 
     if (!email) {
-      // Return all waitlist (for admin)
-      const waitlist = await readWaitlist()
+      // Return info about the subscription system
       return NextResponse.json({
         success: true,
-        count: waitlist.length,
-        data: waitlist
+        system: 'Resend Email Service',
+        status: 'Active',
+        info: 'Email subscriptions are sent via email notifications',
+        ownerEmail: OWNER_EMAIL
       })
     }
 
-    // Find specific email
-    const waitlist = await readWaitlist()
-    const subscriber = waitlist.find((item: any) => item.email === email.toLowerCase())
-
-    if (!subscriber) {
+    // For now, just confirm email format is valid
+    if (!validateEmail(email)) {
       return NextResponse.json(
-        { error: 'Email not found' },
-        { status: 404 }
+        { error: 'Invalid email format' },
+        { status: 400 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      data: subscriber
+      message: 'Email format is valid',
+      email: email
     })
   } catch (error) {
-    console.error('Error fetching subscription:', error)
+    console.error('Error checking subscription:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
