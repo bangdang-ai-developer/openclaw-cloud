@@ -110,23 +110,35 @@ export async function POST(request: NextRequest) {
     // Add admin user if email provided
     let adminUser = null
     if (adminEmail) {
-      adminUser = await findUserByEmail(adminEmail)
+      try {
+        adminUser = await findUserByEmail(adminEmail)
 
-      if (adminUser) {
-        // User exists, add to tenant
-        await addUserToTenant(tenant.id, adminUser.id, 'owner')
-      } else if (adminFullName && adminPassword) {
-        // Create new user and add to tenant
-        const newUser = await registerUser({
-          email: adminEmail,
-          password: adminPassword,
-          full_name: adminFullName
-        })
+        if (adminUser) {
+          // User exists, add to tenant
+          await addUserToTenant(tenant.id, adminUser.id, 'owner')
+          console.log(`✅ Added existing admin user ${adminEmail} to tenant ${tenant.slug}`)
+        } else if (adminFullName && adminPassword) {
+          // Create new user and add to tenant
+          console.log(`Creating new admin user: ${adminEmail}`)
+          const newUser = await registerUser({
+            email: adminEmail,
+            password: adminPassword,
+            full_name: adminFullName
+          })
 
-        if (newUser.user) {
-          await addUserToTenant(tenant.id, newUser.user.id, 'owner')
-          adminUser = newUser.user
+          if (newUser.user) {
+            await addUserToTenant(tenant.id, newUser.user.id, 'owner')
+            adminUser = newUser.user
+            console.log(`✅ Created and added admin user ${adminEmail} to tenant ${tenant.slug}`)
+          } else {
+            console.error(`❌ Failed to create admin user ${adminEmail}`)
+          }
+        } else {
+          console.warn(`⚠️ Admin user ${adminEmail} not found and no credentials provided`)
         }
+      } catch (userError: any) {
+        console.error(`❌ Error handling admin user ${adminEmail}:`, userError.message)
+        // Don't fail tenant creation if admin user setup fails
       }
     }
 
