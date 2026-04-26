@@ -1,5 +1,8 @@
 import { Suspense } from 'react'
 
+// Force dynamic rendering for admin dashboard
+export const dynamic = 'force-dynamic'
+
 async function getTenantStats() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/admin/tenants`, {
