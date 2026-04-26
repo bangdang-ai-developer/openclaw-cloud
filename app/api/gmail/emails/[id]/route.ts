@@ -15,10 +15,12 @@ async function getOAuth2Client(userId: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const emailId = params.id
+    // Await params in Next.js 15
+    const { id: emailId } = await params
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 

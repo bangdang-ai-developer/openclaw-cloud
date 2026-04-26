@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Pool } from 'pg'
-
-// Simple file-based fallback for development
-const fs = require('fs').promises
-const path = require('path')
+import { promises as fs } from 'fs'
+import path from 'path'
 
 const WAITLIST_FILE = path.join(process.cwd(), 'waitlist.json')
 

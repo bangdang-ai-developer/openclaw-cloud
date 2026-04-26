@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { Pool } from 'pg'
-
-// PostgreSQL connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://openclaw:openclaw_dev_password@localhost:5432/openclaw_cloud'
-})
 
 // Get OAuth2 client for user
 async function getOAuth2Client(userId: string) {
@@ -73,6 +67,8 @@ export async function GET(request: NextRequest) {
     // Fetch details for each message
     const emails = await Promise.all(
       response.data.messages.slice(0, 10).map(async (message) => {
+        if (!message.id) return null
+
         const detail = await gmail.users.messages.get({
           userId: 'me',
           id: message.id,
@@ -95,9 +91,12 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    // Filter out null values
+    const validEmails = emails.filter(email => email !== null)
+
     return NextResponse.json({
       success: true,
-      emails,
+      emails: validEmails,
       nextPageToken: response.data.nextPageToken,
       resultSizeEstimate: response.data.resultSizeEstimate
     })

@@ -1,10 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Pool } from 'pg'
+import { promises as fs } from 'fs'
+import path from 'path'
 
-// PostgreSQL connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://openclaw:openclaw_dev_password@localhost:5432/openclaw_cloud'
-})
+// Simple file-based user storage for MVP
+const USERS_FILE = path.join(process.cwd(), 'data', 'users.json')
+
+// Ensure data directory exists
+async function ensureDataDir() {
+  const dataDir = path.join(process.cwd(), 'data')
+  try {
+    await fs.mkdir(dataDir, { recursive: true })
+  } catch (error) {
+    // Directory might already exist
+  }
+}
+
+// Read users from file
+async function readUsers() {
+  try {
+    await ensureDataDir()
+    const data = await fs.readFile(USERS_FILE, 'utf-8')
+    return JSON.parse(data)
+  } catch (error) {
+    return []
+  }
+}
+
+// Write users to file
+async function writeUsers(users: any[]) {
+  await ensureDataDir()
+  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2))
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,50 +60,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Read existing users
+    const users = await readUsers()
+
     // Check if user exists
-    const client = await pool.connect()
-    try {
-      const existingUser = await client.query(
-        'SELECT id FROM users WHERE email = $1',
-        [email.toLowerCase()]
+    const existingUser = users.find(
+      (u: any) => u.email.toLowerCase() === email.toLowerCase()
+    )
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Email đã được sử dụng' },
+        { status: 409 }
       )
-
-      if (existingUser.rows.length > 0) {
-        return NextResponse.json(
-          { error: 'Email đã được sử dụng' },
-          { status: 409 }
-        )
-      }
-
-      // Create new user
-      const result = await client.query(
-        `INSERT INTO users (email, password_hash, full_name, tier, status)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING id, email, full_name, tier, status, created_at`,
-        [
-          email.toLowerCase(),
-          password, // In production, hash this with bcrypt!
-          fullName || null,
-          'starter',
-          'active'
-        ]
-      )
-
-      const user = result.rows[0]
-
-      return NextResponse.json({
-        success: true,
-        message: 'Đăng ký thành công!',
-        user: {
-          id: user.id,
-          email: user.email,
-          fullName: user.full_name,
-          tier: user.tier
-        }
-      })
-    } finally {
-      client.release()
     }
+
+    // Create new user
+    const newUser = {
+      id: 'user_' + Date.now(),
+      email: email.toLowerCase(),
+      password_hash: password, // In production, hash this with bcrypt!
+      full_name: fullName || null,
+      tier: 'starter',
+      status: 'active',
+      phone: null,
+      created_at: new Date().toISOString(),
+      last_login_at: null
+    }
+
+    users.push(newUser)
+    await writeUsers(users)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Đăng ký thành công!',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        fullName: newUser.full_name,
+        tier: newUser.tier
+      }
+    })
   } catch (error: any) {
     console.error('Registration error:', error)
     return NextResponse.json(
