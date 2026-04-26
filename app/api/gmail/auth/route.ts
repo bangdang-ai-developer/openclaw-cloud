@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
 
-// OAuth2 client configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-})
-
 // Scopes for Gmail API
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -16,6 +9,13 @@ const SCOPES = [
 
 export async function GET(request: NextRequest) {
   try {
+    // OAuth2 client configuration
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    )
+
     // Generate OAuth URL
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',

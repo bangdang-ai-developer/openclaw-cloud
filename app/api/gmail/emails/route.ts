@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       userId: 'me',
       maxResults: limit,
       pageToken: pageToken,
-      labelIds: ['INBOX'] // Only fetch from inbox
+      labelIds: ['INBOX']
     })
 
     if (!response.data.messages) {
