@@ -25,10 +25,9 @@ export async function POST(request: NextRequest) {
 
     // Create database connection with SSL configuration
     const pool = new Pool({
-      connectionString: process.env.POSTGRES_URL,
+      connectionString: process.env.DATABASE_URL,
       ssl: {
-        rejectUnauthorized: false,
-        checkServerIdentity: false
+        rejectUnauthorized: false
       }
     })
 
