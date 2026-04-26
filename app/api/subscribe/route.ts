@@ -1,11 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
-
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-// Owner email to receive notifications
-const OWNER_EMAIL = process.env.OWNER_EMAIL || 'bang@example.com'
 
 // Email validation
 function validateEmail(email: string): boolean {
@@ -33,11 +26,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send notification email to owner
+    // Check if Resend is configured
+    const resendApiKey = process.env.RESEND_API_KEY
+    const ownerEmail = process.env.OWNER_EMAIL
+
+    if (!resendApiKey || resendApiKey === 'your-resend-api-key-here') {
+      // Resend not configured - log to console and return success
+      console.log('📧 New subscription (Resend not configured):', {
+        email,
+        fullName,
+        companyName,
+        tierInterest,
+        date: new Date().toISOString()
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: '🎉 Cảm ơn bạn đã đăng ký! Chúng tôi sẽ liên hệ sớm.',
+        isNew: true,
+        note: 'Email system setup pending - notification logged to console'
+      })
+    }
+
+    // Resend is configured - send emails
+    const { Resend } = await import('resend')
+    const resend = new Resend(resendApiKey)
+
     try {
+      // Send notification email to owner
       await resend.emails.send({
         from: 'OpenClaw Cloud <onboarding@resend.dev>',
-        to: OWNER_EMAIL,
+        to: ownerEmail,
         subject: `🎉 New Email Signup: ${email}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -70,7 +89,7 @@ export async function POST(request: NextRequest) {
         `,
       })
 
-      // Send confirmation email to subscriber (optional)
+      // Send confirmation email to subscriber
       await resend.emails.send({
         from: 'OpenClaw Cloud <onboarding@resend.dev>',
         to: email,
@@ -129,8 +148,16 @@ export async function POST(request: NextRequest) {
     } catch (emailError: any) {
       console.error('Resend error:', emailError)
 
-      // Fallback: Still return success even if email fails
-      // (Don't block user signup if email service has issues)
+      // Email failed but still log the signup
+      console.log('📧 New subscription (email failed):', {
+        email,
+        fullName,
+        companyName,
+        tierInterest,
+        error: emailError.message,
+        date: new Date().toISOString()
+      })
+
       return NextResponse.json({
         success: true,
         message: '🎉 Đăng ký thành công! Chúng tôi sẽ liên hệ sớm.',
@@ -154,12 +181,15 @@ export async function GET(request: NextRequest) {
 
     if (!email) {
       // Return info about the subscription system
+      const resendConfigured = process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your-resend-api-key-here'
+
       return NextResponse.json({
         success: true,
-        system: 'Resend Email Service',
-        status: 'Active',
-        info: 'Email subscriptions are sent via email notifications',
-        ownerEmail: OWNER_EMAIL
+        system: resendConfigured ? 'Resend Email Service' : 'Console Logging',
+        status: resendConfigured ? 'Active' : 'Setup Pending',
+        info: resendConfigured
+          ? 'Email subscriptions are sent via Resend'
+          : 'Email system pending setup - see VERCEL_ENV_SETUP.md'
       })
     }
 

@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "1777188670918",
+    "email": "test@example.com",
+    "fullName": "Test",
+    "companyName": "Test",
+    "tierInterest": "starter",
+    "source": "landing_page",
+    "status": "active",
+    "createdAt": "2026-04-26T07:31:10.918Z",
+    "metadata": {
+      "userAgent": "api",
+      "ip": "unknown",
+      "referrer": "direct"
+    }
+  }
+]
