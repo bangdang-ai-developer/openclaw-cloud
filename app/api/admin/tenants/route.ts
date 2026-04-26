@@ -7,7 +7,7 @@ import {
   generateSlug,
   addUserToTenant
 } from '@/lib/tenant'
-import { findUserByEmail } from '@/lib/auth'
+import { findUserByEmail, createUser, registerUser } from '@/lib/auth'
 
 // GET /api/admin/tenants - List all tenants (admin only)
 export async function GET(request: NextRequest) {
@@ -71,7 +71,9 @@ export async function POST(request: NextRequest) {
       contactEmail,
       contactPhone,
       tier,
-      adminEmail
+      adminEmail,
+      adminFullName,
+      adminPassword
     } = body
 
     // Validation
@@ -106,20 +108,25 @@ export async function POST(request: NextRequest) {
     })
 
     // Add admin user if email provided
+    let adminUser = null
     if (adminEmail) {
-      const adminUser = await findUserByEmail(adminEmail)
+      adminUser = await findUserByEmail(adminEmail)
 
       if (adminUser) {
+        // User exists, add to tenant
         await addUserToTenant(tenant.id, adminUser.id, 'owner')
-      } else {
-        return NextResponse.json(
-          {
-            error: 'Admin user not found',
-            message: 'Tenant created but no admin user assigned',
-            tenant
-          },
-          { status: 201 }
-        )
+      } else if (adminFullName && adminPassword) {
+        // Create new user and add to tenant
+        const newUser = await registerUser({
+          email: adminEmail,
+          password: adminPassword,
+          full_name: adminFullName
+        })
+
+        if (newUser.user) {
+          await addUserToTenant(tenant.id, newUser.user.id, 'owner')
+          adminUser = newUser.user
+        }
       }
     }
 
