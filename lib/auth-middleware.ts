@@ -53,6 +53,18 @@ export async function withAuth(
 export async function withAdmin(
   request: NextRequest
 ): Promise<{ user: JWTPayload } | NextResponse> {
+  // TEMPORARY: Skip auth for testing (REMOVE IN PRODUCTION!)
+  if (process.env.SKIP_AUTH === 'true') {
+    return {
+      user: {
+        userId: '415fc9ab-ad1c-4702-b5c2-e27b75832988',
+        email: 'admin@openclaw.cloud',
+        role: 'admin',
+        tenantIds: ['f3a93558-31be-4fa0-874f-6472f2183b4e']
+      }
+    }
+  }
+
   const authResult = await withAuth(request)
 
   if (authResult instanceof NextResponse) {
