@@ -10,7 +10,8 @@
     "test:e2e": "playwright test --headed",
     "test:e2e:headless": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "db:migrate": "tsx scripts/migrate-users.ts"
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -28,11 +29,13 @@
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

@@ -1,41 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
-
-// Simple file-based user storage for MVP
-const USERS_FILE = path.join(process.cwd(), 'data', 'users.json')
-
-// Ensure data directory exists
-async function ensureDataDir() {
-  const dataDir = path.join(process.cwd(), 'data')
-  try {
-    await fs.mkdir(dataDir, { recursive: true })
-  } catch (error) {
-    // Directory might already exist
-  }
-}
-
-// Read users from file
-async function readUsers() {
-  try {
-    await ensureDataDir()
-    const data = await fs.readFile(USERS_FILE, 'utf-8')
-    return JSON.parse(data)
-  } catch (error) {
-    return []
-  }
-}
-
-// Write users to file
-async function writeUsers(users: any[]) {
-  await ensureDataDir()
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2))
-}
+import { registerUser, findUserByEmail } from '@/lib/auth'
+import { generateSlug } from '@/lib/tenant'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, fullName } = body
+    const { email, password, fullName, phone, businessName, industry } = body
 
     // Validation
     if (!email || !password) {
@@ -60,14 +30,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Read existing users
-    const users = await readUsers()
-
     // Check if user exists
-    const existingUser = users.find(
-      (u: any) => u.email.toLowerCase() === email.toLowerCase()
-    )
-
+    const existingUser = await findUserByEmail(email)
     if (existingUser) {
       return NextResponse.json(
         { error: 'Email đã được sử dụng' },
@@ -75,37 +39,75 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create new user
-    const newUser = {
-      id: 'user_' + Date.now(),
-      email: email.toLowerCase(),
-      password_hash: password, // In production, hash this with bcrypt!
-      full_name: fullName || null,
-      tier: 'starter',
-      status: 'active',
-      phone: null,
-      created_at: new Date().toISOString(),
-      last_login_at: null
-    }
+    // Determine if creating tenant (trial signup)
+    const createTenant = businessName ? {
+      business_name: businessName,
+      slug: await generateUniqueSlug(businessName),
+      industry: industry,
+      contact_email: email.toLowerCase(),
+      tier: 'trial'
+    } : undefined
 
-    users.push(newUser)
-    await writeUsers(users)
+    // Register user (and tenant if provided)
+    const result = await registerUser({
+      email,
+      password,
+      full_name: fullName,
+      phone,
+      createTenant
+    })
 
     return NextResponse.json({
       success: true,
-      message: 'Đăng ký thành công!',
+      message: createTenant
+        ? 'Đăng ký thành công! Tenant trial đã được tạo.'
+        : 'Đăng ký thành công!',
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        fullName: newUser.full_name,
-        tier: newUser.tier
-      }
+        id: result.user.id,
+        email: result.user.email,
+        fullName: result.user.full_name,
+        tier: result.user.tier
+      },
+      token: result.token,
+      tenants: result.tenants
     })
   } catch (error: any) {
     console.error('Registration error:', error)
+
+    // Handle specific errors
+    if (error.code === '23505') { // Unique violation
+      return NextResponse.json(
+        { error: 'Email đã được sử dụng' },
+        { status: 409 }
+      )
+    }
+
+    if (error.message === 'Failed to create user') {
+      return NextResponse.json(
+        { error: 'Lỗi khi tạo người dùng. Vui lòng thử lại.' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Lỗi server. Vui lòng thử lại.' },
       { status: 500 }
     )
   }
+}
+
+// Helper function to generate unique slug
+async function generateUniqueSlug(baseSlug: string): Promise<string> {
+  const { generateSlug } = await import('@/lib/tenant')
+  const { findTenantBySlug } = await import('@/lib/tenant')
+
+  let slug = generateSlug(baseSlug)
+  let counter = 1
+
+  while (await findTenantBySlug(slug)) {
+    slug = `${generateSlug(baseSlug)}-${counter}`
+    counter++
+  }
+
+  return slug
 }
