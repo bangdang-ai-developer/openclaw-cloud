@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Check if Resend is configured
     const resendApiKey = process.env.RESEND_API_KEY
-    const ownerEmail = process.env.OWNER_EMAIL
+    const ownerEmail = process.env.OWNER_EMAIL || 'bang@example.com'
 
     if (!resendApiKey || resendApiKey === 'your-resend-api-key-here') {
       // Resend not configured - log to console and return success
