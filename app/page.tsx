@@ -589,10 +589,10 @@ export default function LandingPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
+                  className="w-full px-6 py-4 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg placeholder:text-gray-600 placeholder:font-medium"
                 />
                 {!email && (
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-gray-600 font-medium mt-2">
                     💡 Nhập email để kích hoạt nút đăng ký
                   </p>
                 )}
@@ -609,7 +609,7 @@ export default function LandingPage() {
                     placeholder="Nguyễn Văn A"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                    className="w-full px-6 py-4 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 placeholder:text-gray-600 placeholder:font-medium"
                   />
                 </div>
 
@@ -623,7 +623,7 @@ export default function LandingPage() {
                     placeholder="Công ty ABC"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                    className="w-full px-6 py-4 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 placeholder:text-gray-600 placeholder:font-medium"
                   />
                 </div>
               </div>
