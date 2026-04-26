@@ -91,10 +91,9 @@ export async function GET(request: NextRequest) {
   try {
     // Check if tables already exist
     const pool = new Pool({
-      connectionString: process.env.POSTGRES_URL,
+      connectionString: process.env.DATABASE_URL,
       ssl: {
-        rejectUnauthorized: false,
-        checkServerIdentity: false
+        rejectUnauthorized: false
       }
     })
 
