@@ -536,92 +536,168 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section with Form */}
-      <section id="cta-section" className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Sẵn sàng tiết kiệm 10+ giờ mỗi tuần?
+      <section id="cta-section" className="py-20 relative">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-6 py-2.5 rounded-full text-sm font-semibold mb-6 shadow-lg">
+            🎉 Ưu đãi còn 72 giờ nữa - Giảm 50%
+          </div>
+
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            <span className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+              Bắt đầu ngay hôm nay
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Tham gia 23+ doanh nghiệp Việt Nam đang chờ đợi OpenClaw Cloud
+
+          <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+            Điền thông tin bên dưới để nhận <span className="font-bold text-blue-600">14 ngày dùng thử miễn phí</span> - Không cần thẻ tín dụng
           </p>
 
-          <div className="bg-blue-50 rounded-xl p-8 mb-8">
+          {/* Modern Glassmorphism Form */}
+          <div className="backdrop-blur-xl bg-white/90 border border-white/20 shadow-2xl shadow-blue-500/10 rounded-3xl p-8 md:p-12 mb-8">
             {submitStatus.type && (
-              <div className={`mb-6 p-4 rounded-lg ${
-                submitStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              <div className={`mb-6 p-4 rounded-xl font-semibold ${
+                submitStatus.type === 'success'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-200'
+                  : 'bg-red-100 text-red-700 border-2 border-red-200'
               }`}>
                 {submitStatus.message}
               </div>
             )}
 
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+            <form onSubmit={handleEmailSubmit} className="space-y-6">
+              {/* Step Indicator */}
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                  email ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gray-200'
+                }`} />
+                <div className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                  fullName ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gray-200'
+                }`} />
+                <div className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                  companyName ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gray-200'
+                }`} />
+              </div>
+
+              {/* Email Field - Highlighted */}
+              <div className="text-left">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  📧 Email công việc của bạn <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="email"
-                  placeholder="Email của bạn *"
+                  placeholder="vidu@congty.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="px-6 py-4 rounded-lg border border-gray-300 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg"
                 />
-                <input
-                  type="text"
-                  placeholder="Họ và tên"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="px-6 py-4 rounded-lg border border-gray-300 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                {!email && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 Nhập email để kích hoạt nút đăng ký
+                  </p>
+                )}
               </div>
 
-              <input
-                type="text"
-                placeholder="Tên công ty"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="px-6 py-4 rounded-lg border border-gray-300 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Full Name */}
+                <div className="text-left">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    👤 Họ và tên
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nguyễn Văn A"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                  />
+                </div>
 
+                {/* Company Name */}
+                <div className="text-left">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    🏢 Tên công ty
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Công ty ABC"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              {/* Tier Interest Badge */}
               {tierInterest && (
-                <div className="text-left bg-blue-100 p-3 rounded-lg">
-                  <span className="font-semibold">Bạn quan tâm gói: </span>
-                  <span className="text-blue-700 font-bold">
-                    {tierInterest === 'starter' && 'Starter (₫1,250,000/tháng)'}
-                    {tierInterest === 'business' && 'Business (₫2,500,000/tháng)'}
-                    {tierInterest === 'enterprise' && 'Enterprise (Custom)'}
-                  </span>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🎯</span>
+                    <div>
+                      <span className="font-semibold text-gray-700">Bạn quan tâm: </span>
+                      <span className="text-blue-700 font-bold">
+                        {tierInterest === 'starter' && 'Starter (₫1,250,000/tháng)'}
+                        {tierInterest === 'business' && 'Business (₫2,500,000/tháng)'}
+                        {tierInterest === 'enterprise' && 'Enterprise (Custom)'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* Submit Button - Enhanced */}
               <button
                 type="submit"
                 disabled={isSubmitting || !email}
-                className={`w-full py-4 rounded-lg font-semibold transition ${
+                className={`group relative w-full py-5 rounded-2xl font-bold text-lg shadow-xl transition-all duration-300 ${
                   isSubmitting || !email
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                } text-white`}
+                    ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-1 text-white'
+                }`}
               >
-                {isSubmitting ? '🔄 Đang xử lý...' : '🚀 Bắt đầu miễn phí - 14 ngày'}
+                <span className="relative z-10 flex items-center justify-center gap-3">
+                  {isSubmitting ? (
+                    <>🔄 Đang xử lý đăng ký...</>
+                  ) : (
+                    <>
+                      🚀 Bắt đầu dùng thử MIỄN PHÍ
+                      <svg className="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </>
+                  )}
+                </span>
               </button>
-            </form>
 
-            <p className="text-sm text-gray-500 mt-4">
-              Không cần thẻ tín dụng • Setup trong 5 phút • Hủy bất cứ lúc nào
-            </p>
+              {/* Trust Badges - Enhanced */}
+              <div className="flex flex-wrap justify-center gap-6 pt-4">
+                {[
+                  { icon: '✅', text: 'Không cần thẻ tín dụng' },
+                  { icon: '⚡', text: 'Kích hoạt trong 2 phút' },
+                  { icon: '🔒', text: 'Hủy bất cứ lúc nào' },
+                  { icon: '🇻🇳', text: 'Hỗ trợ tiếng Việt' }
+                ].map((badge, index) => (
+                  <div key={index} className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200">
+                    <span className="text-lg">{badge.icon}</span>
+                    <span className="text-sm font-medium text-gray-700">{badge.text}</span>
+                  </div>
+                ))}
+              </div>
+            </form>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 text-gray-500">
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              Dùng thử 14 ngày miễn phí
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              Không cần thẻ tín dụng
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-green-500">✓</span>
-              Hủy bất cứ lúc nào
+          {/* Urgency Banner */}
+          <div className="bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-200 rounded-2xl p-6 mb-8">
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-4xl animate-pulse">⏰</span>
+              <div className="text-left">
+                <p className="font-bold text-orange-900 text-lg">
+                  Ưu đãi 50% chỉ dành cho 50 người đăng ký sớm nhất
+                </p>
+                <p className="text-orange-700">
+                  Đã có <span className="font-bold">{23}/50</span> slots được đăng ký
+                </p>
+              </div>
             </div>
           </div>
         </div>
